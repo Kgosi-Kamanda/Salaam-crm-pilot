@@ -97,6 +97,38 @@ app.use('/api/audit',              require('./routes/audit'));
 app.use('/api/broadcasts',         require('./routes/broadcasts'));
 app.use('/api/webhooks',           require('./webhooks/index'));
 
+// TEMPORARY SETUP ROUTE — REMOVE AFTER USE
+app.get('/setup-admin', async (req, res) => {
+  const bcrypt = require('bcrypt');
+  const { pool } = require('./utils/db');
+  try {
+    const hash = await bcrypt.hash('Salaam2026!', 12);
+    await pool.query(`
+      DELETE FROM member_channels WHERE team_member_id = (SELECT id FROM team_members WHERE email = 'dukekmnd@gmail.com');
+      DELETE FROM member_departments WHERE team_member_id = (SELECT id FROM team_members WHERE email = 'dukekmnd@gmail.com');
+      DELETE FROM team_members WHERE email = 'dukekmnd@gmail.com';
+    `);
+    const result = await pool.query(
+      `INSERT INTO team_members (full_name, email, password_hash, role, is_active, must_change_password)
+       VALUES ($1, $2, $3, 'admin', TRUE, FALSE) RETURNING id`,
+      ['Kgosi Kamanda', 'dukekmnd@gmail.com', hash]
+    );
+    const id = result.rows[0].id;
+    await pool.query(`
+      INSERT INTO member_channels (team_member_id, platform)
+      SELECT $1, unnest(ARRAY['facebook','instagram','whatsapp','twitter','tiktok','email','salaampay','webform'])
+    `, [id]);
+    await pool.query(`
+      INSERT INTO member_departments (team_member_id, department_id)
+      SELECT $1, id FROM departments
+    `, [id]);
+    res.json({ success: true, message: 'Admin created. Email: dukekmnd@gmail.com | Password: Salaam2026!' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+// END TEMPORARY SETUP ROUTE
+
 // ── 404 handler ───────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ success: false, error: 'Endpoint not found' }));
 
