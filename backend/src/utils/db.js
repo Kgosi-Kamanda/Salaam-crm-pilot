@@ -7,7 +7,6 @@ const pool = new Pool({
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
   ssl: { rejectUnauthorized: false },
-  family: 4,  // force IPv4 — prevents ENETUNREACH on Railway
 });
 
 pool.on('error', err => logger.error('DB pool error', { error: err.message }));
