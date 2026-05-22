@@ -55,7 +55,9 @@ router.post('/login', async (req, res) => {
       return res.status(429).json({ success: false, error: `Account locked until ${new Date(member.locked_until).toISOString()}` });
     }
 
-    const valid = await bcrypt.compare(password, member.password_hash);
+    // Accept both $2a$ (PostgreSQL) and $2b$ (Node.js bcrypt) hash formats
+const normalizedHash = member.password_hash.replace(/^\$2a\$/, '$2b$');
+const valid = await bcrypt.compare(password, normalizedHash);
 
     if (!valid) {
       const newFails = (member.failed_logins || 0) + 1;
