@@ -16,3 +16,7 @@
   },
   "browserslist": { "production": [">0.2%", "not dead"] }
 }
+"eslintConfig": {
+  "extends": ["react-app"],
+  "rules": {}
+}
